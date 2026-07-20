@@ -1,0 +1,40 @@
+{
+  "pipelines": {
+    "count": 3,
+    "items": [
+      { "id": "main", "conf": { "functions": [] } },
+      { "id": "orphan_pipe", "conf": { "description": "Orphaned — referenced by nothing", "functions": [ { "id": "eval", "conf": { "add": [ { "name": "z", "value": "1" } ] } } ] } },
+      { "id": "used_pipe", "conf": { "description": "Referenced by a route", "functions": [ { "id": "eval", "conf": {} } ] } }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      { "id": "default", "routes": [ { "id": "sr1", "name": "main flow", "filter": "true", "pipeline": "used_pipe", "output": "stg_out", "final": true } ] }
+    ]
+  },
+  "inputs": {
+    "count": 1,
+    "items": [ { "id": "stg_in", "type": "tcp", "sendToRoutes": true } ]
+  },
+  "outputs": {
+    "count": 2,
+    "items": [
+      { "id": "stg_out", "type": "filesystem" },
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#43:Kd3mZ9pQr1sWv7Bn",
+        "compress": true,
+        "maxPayloadSizeKB": 4096,
+        "onBackpressure": "block",
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": { "count": 0, "items": [] },
+  "packs": { "count": 0, "items": [] }
+}

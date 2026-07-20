@@ -1,0 +1,67 @@
+{
+  "pipelines": {
+    "count": 2,
+    "items": [
+      { "id": "main", "conf": { "functions": [] } },
+      {
+        "id": "apac_norm",
+        "conf": {
+          "description": "Normalize APAC edge traffic",
+          "functions": [
+            { "id": "lookup", "conf": { "file": "geo_city.csv", "matchMode": "exact", "inFields": [ { "eventField": "clientip", "lookupField": "ip" } ] } },
+            { "id": "lookup", "conf": { "file": "東京_ipリスト.csv", "matchMode": "cidr", "inFields": [ { "eventField": "clientip", "lookupField": "cidr" } ] } },
+            { "id": "eval", "conf": { "add": [
+              { "name": "watchlisted", "value": "C.Lookup('empty_watchlist.csv').match(host)" },
+              { "name": "segment", "value": "C.Lookup('customer segments.csv').match(account_id)" }
+            ] } }
+          ]
+        }
+      }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      {
+        "id": "default",
+        "routes": [
+          { "id": "r_apac", "name": "apac edge traffic", "filter": "index=='apac'", "pipeline": "apac_norm", "output": "hec_primary", "final": false },
+          { "id": "r_legacy_drop", "name": "=HYPERLINK(\"http://evil.example.test\",\"payroll export\")", "description": "Named by whoever pasted a spreadsheet cell in here", "filter": "sourcetype=='legacy'", "pipeline": "main", "output": "devnull", "disabled": true, "final": false }
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "count": 1,
+    "items": [
+      { "id": "kafka_in", "type": "kafka", "brokers": [ "kafka-1.example.internal:9092" ], "topics": [ "edge-events" ], "sendToRoutes": true, "description": "APAC edge Kafka" }
+    ]
+  },
+  "outputs": {
+    "count": 1,
+    "items": [
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#45:Vb7nC1kFd6PsA3Wq",
+        "compress": false,
+        "maxPayloadSizeKB": 4096,
+        "onBackpressure": "block",
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": {
+    "count": 4,
+    "items": [
+      { "id": "geo_city.csv", "size": 20480 },
+      { "id": "東京_ipリスト.csv", "size": 2048 },
+      { "id": "empty_watchlist.csv", "size": 24 },
+      { "id": "customer segments.csv", "size": 512 }
+    ]
+  },
+  "packs": { "count": 0, "items": [] }
+}

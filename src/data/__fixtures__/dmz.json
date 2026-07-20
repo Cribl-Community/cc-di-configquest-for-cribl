@@ -1,0 +1,64 @@
+{
+  "pipelines": {
+    "count": 2,
+    "items": [
+      { "id": "main", "conf": { "functions": [] } },
+      {
+        "id": "dmz_scrub",
+        "conf": {
+          "description": "Scrub untrusted DMZ traffic <img src=x onerror=alert(1)>",
+          "functions": [
+            { "id": "eval", "description": "carry the raw user agent through untouched", "conf": { "add": [
+              { "name": "ua_raw", "value": "'<script>alert(document.cookie)</script>'" },
+              { "name": "sheet_note", "value": "'=cmd|'/c calc'!A1'" }
+            ] } },
+            { "id": "lookup", "conf": { "file": "web+prod&2026#final.csv", "matchMode": "exact", "inFields": [ { "eventField": "host", "lookupField": "host" } ] } },
+            { "id": "drop", "filter": "host==null", "conf": {} }
+          ]
+        }
+      }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      {
+        "id": "default",
+        "routes": [
+          { "id": "r_dmz", "name": "dmz to hec", "filter": "index=='dmz'", "pipeline": "dmz_scrub", "output": "hec_primary", "final": false }
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "count": 2,
+    "items": [
+      { "id": "syslog_edge", "type": "syslog", "host": "0.0.0.0", "port": 514, "maxBufferSize": 1000, "sendToRoutes": true, "description": "Edge syslog collector" },
+      { "id": "tap_span", "type": "tcp", "host": "0.0.0.0", "port": 10060, "sendToRoutes": false, "description": "Span port tap — wired to nothing since the 2025 rebuild" }
+    ]
+  },
+  "outputs": {
+    "count": 1,
+    "items": [
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#46:Tz4jH9yUe2NrM8Xc",
+        "compress": true,
+        "maxPayloadSizeKB": 4096,
+        "onBackpressure": "block",
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": {
+    "count": 1,
+    "items": [
+      { "id": "web+prod&2026#final.csv", "size": 96 }
+    ]
+  },
+  "packs": { "count": 0, "items": [] }
+}

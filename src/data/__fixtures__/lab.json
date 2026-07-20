@@ -1,0 +1,53 @@
+{
+  "pipelines": {
+    "count": 2,
+    "items": [
+      { "id": "main", "conf": { "functions": [] } },
+      {
+        "id": "lab_scratch",
+        "conf": {
+          "description": "Scratch pipeline — exists in no other Worker Group",
+          "functions": [
+            { "id": "eval", "conf": { "add": [ { "name": "lab", "value": "true" } ] } }
+          ]
+        }
+      }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      {
+        "id": "default",
+        "routes": [
+          { "id": "r_lab", "name": "lab scratch", "filter": "index=='lab'", "pipeline": "lab_scratch", "output": "hec_primary", "final": false },
+          { "id": "r_ghost_pipe", "name": "ghost catch-all", "description": "Survived the pipeline it used to call", "filter": "true", "pipeline": "ghost_pipe", "output": "hec_primary", "final": true }
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "count": 1,
+    "items": [
+      { "id": "lab_in", "type": "http", "host": "0.0.0.0", "port": 10080, "sendToRoutes": true, "description": "Lab HTTP collector" }
+    ]
+  },
+  "outputs": {
+    "count": 1,
+    "items": [
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#47:Lq6vB3dSg5KtP1Zm",
+        "compress": true,
+        "maxPayloadSizeKB": 4096,
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": { "count": 0, "items": [] },
+  "packs": { "count": 0, "items": [] }
+}

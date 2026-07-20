@@ -1,0 +1,11 @@
+{
+  "count": 6,
+  "items": [
+    { "id": "prod", "type": "stream", "description": "Production", "configVersion": "abc123", "streamtags": ["prod"] },
+    { "id": "staging", "type": "stream", "description": "Staging", "configVersion": "def456", "streamtags": ["stg"] },
+    { "id": "eu_west", "type": "stream", "description": "EU West (Frankfurt)", "configVersion": "ghi789", "streamtags": ["prod", "eu"] },
+    { "id": "apac", "type": "stream", "description": "APAC (Tokyo)", "configVersion": "jkl012", "streamtags": ["prod", "apac"] },
+    { "id": "dmz", "type": "stream", "description": "DMZ collectors", "configVersion": "mno345", "streamtags": ["prod", "edge"] },
+    { "id": "lab", "type": "stream", "description": "Lab / scratch", "configVersion": "pqr678", "streamtags": ["lab"] }
+  ]
+}

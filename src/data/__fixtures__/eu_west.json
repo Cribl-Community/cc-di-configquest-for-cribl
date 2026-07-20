@@ -1,0 +1,69 @@
+{
+  "pipelines": {
+    "count": 3,
+    "items": [
+      { "id": "main", "conf": { "functions": [] } },
+      {
+        "id": "gdpr_mask",
+        "conf": {
+          "description": "Mask EU personal data before egress",
+          "functions": [
+            { "id": "mask", "conf": { "rules": [ { "matchRegex": "/(?<=email=)[^&\\s]+/g", "replaceExpr": "C.Mask.md5(g0)" } ], "depth": 3 } },
+            { "id": "lookup", "conf": { "file": "geo_city.csv", "matchMode": "exact", "inFields": [ { "eventField": "clientip", "lookupField": "ip" } ] } }
+          ]
+        }
+      },
+      {
+        "id": "enterprise_windows_security_event_normalization_and_enrichment_pipeline_v3_final_approved",
+        "conf": {
+          "description": "Kept from the 2019 migration; nobody has dared rename it",
+          "functions": [
+            { "id": "eval", "conf": { "add": [ { "name": "vendor", "value": "'microsoft'" }, { "name": "product", "value": "'windows'" } ] } }
+          ]
+        }
+      }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      {
+        "id": "default",
+        "routes": [
+          { "id": "r_gdpr", "name": "eu personal data", "filter": "sourcetype=='eu_web'", "pipeline": "gdpr_mask", "output": "hec_primary", "final": false },
+          { "id": "r_windows", "name": "windows security events", "filter": "sourcetype=='WinEventLog:Security'", "pipeline": "enterprise_windows_security_event_normalization_and_enrichment_pipeline_v3_final_approved", "output": "hec_primary", "final": false }
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "count": 1,
+    "items": [
+      { "id": "syslog_edge", "type": "syslog", "host": "0.0.0.0", "port": 9514, "maxBufferSize": 1000, "sendToRoutes": true, "description": "Edge syslog collector" }
+    ]
+  },
+  "outputs": {
+    "count": 1,
+    "items": [
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#44:Yh5tG2wXj8LmQ4Rz",
+        "compress": true,
+        "maxPayloadSizeKB": 1024,
+        "onBackpressure": "block",
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": {
+    "count": 1,
+    "items": [
+      { "id": "geo_city.csv", "size": 20480 }
+    ]
+  },
+  "packs": { "count": 0, "items": [] }
+}

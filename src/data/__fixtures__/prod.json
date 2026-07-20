@@ -1,0 +1,78 @@
+{
+  "pipelines": {
+    "count": 6,
+    "items": [
+      { "id": "main", "conf": { "description": "Built-in default pipeline", "functions": [] } },
+      {
+        "id": "web_logs",
+        "conf": {
+          "description": "Parse and enrich web logs",
+          "functions": [
+            { "id": "eval", "filter": "true", "conf": { "add": [ { "name": "tag", "value": "'ZEBRA_TOKEN_42'" } ] } },
+            { "id": "lookup", "conf": { "file": "geo_city.csv", "matchMode": "exact", "inFields": [ { "eventField": "clientip" } ] } },
+            { "id": "chain", "conf": { "pipeline": "shared_enrich" } },
+            { "id": "eval", "description": "threat enrichment", "conf": { "add": [ { "name": "threat", "value": "C.Lookup('threat_intel.csv').match(host)" } ] } }
+          ]
+        }
+      },
+      { "id": "shared_enrich", "conf": { "description": "Shared enrichment, invoked via Chain", "functions": [ { "id": "eval", "conf": { "add": [ { "name": "env", "value": "'prod'" } ] } } ] } },
+      { "id": "noisy_pipe", "conf": { "description": "Contains a disabled function", "functions": [ { "id": "eval", "conf": { "add": [ { "name": "x", "value": "1" } ] } }, { "id": "drop", "disabled": true, "filter": "false", "conf": {} } ] } },
+      { "id": "preproc_pipe", "conf": { "description": "Source pre-processing", "functions": [ { "id": "eval", "conf": {} } ] } },
+      { "id": "postproc_pipe", "conf": { "description": "Destination post-processing", "functions": [ { "id": "eval", "conf": {} } ] } }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      {
+        "id": "default",
+        "routes": [
+          { "id": "r_web", "name": "web to splunk", "filter": "sourcetype=='access'", "pipeline": "web_logs", "output": "splunk_out", "final": false },
+          { "id": "r_noisy", "name": "noisy to devnull", "filter": "true", "pipeline": "noisy_pipe", "output": "devnull", "final": false },
+          { "id": "r_dangling", "name": "bad output route", "filter": "true", "pipeline": "web_logs", "output": "nonexistent_dest", "final": true },
+          { "id": "r_expr", "name": "dynamic output", "filter": "true", "pipeline": "web_logs", "enableOutputExpression": true, "outputExpression": "'splunk_' + host", "final": false }
+        ]
+      }
+    ]
+  },
+  "inputs": {
+    "count": 3,
+    "items": [
+      { "id": "splunk_in", "type": "splunk", "sendToRoutes": true },
+      { "id": "dead_input", "type": "http", "disabled": true, "sendToRoutes": true },
+      { "id": "pp_input", "type": "tcp", "pipeline": "preproc_pipe", "sendToRoutes": false }
+    ]
+  },
+  "outputs": {
+    "count": 2,
+    "items": [
+      { "id": "splunk_out", "type": "splunk", "pipeline": "postproc_pipe" },
+      {
+        "id": "hec_primary",
+        "type": "splunk_hec",
+        "description": "Primary Splunk HEC",
+        "urls": [ { "url": "https://hec.example.com:8088/services/collector/event", "weight": 1 } ],
+        "authType": "manual",
+        "token": "#42:aQ8xR2vLp0dNc6Ty",
+        "compress": true,
+        "maxPayloadSizeKB": 4096,
+        "onBackpressure": "block",
+        "tls": { "rejectUnauthorized": true }
+      }
+    ]
+  },
+  "lookups": {
+    "count": 3,
+    "items": [
+      { "id": "geo_city.csv", "size": 20480 },
+      { "id": "threat_intel.csv", "size": 4096 },
+      { "id": "unused_ref.csv", "size": 128 }
+    ]
+  },
+  "packs": {
+    "count": 1,
+    "items": [
+      { "id": "security_pack", "source": "cribl", "displayName": "Security Pack", "version": "1.0.0" }
+    ]
+  }
+}

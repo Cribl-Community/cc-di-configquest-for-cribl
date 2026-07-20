@@ -1,0 +1,72 @@
+# Product API access declaration. Declare Cribl product API paths this app needs.
+# At install time, admins see exactly which platform resources the app will use.
+#
+# Config Quest for Cribl is READ-ONLY: every declared action is GET.
+# The App Platform KV store (/a/<appId>/kvstore/*) is app-scoped and auto-granted,
+# so it is intentionally NOT declared here.
+#
+# NOTE: these paths must be confirmed against a live Leader during Live Preview.
+# In particular, the `/m/:gid/system/*` forms rely on Stream's per-group context
+# prefix (see README discrepancy log).
+
+policies:
+  # Enumerate Worker Groups (Stream). The `/*` entry is required for child paths,
+  # otherwise the collection can return empty results.
+  - object: '/products/stream/groups'
+    actions: ['GET']
+  - object: '/products/stream/groups/*'
+    actions: ['GET']
+
+  # Per Worker Group knowledge objects (group context prefix `/m/:gid`).
+  - object: '/m/:gid/pipelines'
+    actions: ['GET']
+  - object: '/m/:gid/routes'
+    actions: ['GET']
+  - object: '/m/:gid/system/inputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/outputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/lookups'
+    actions: ['GET']
+  # A lookup file's rows, for the Compare and Across-Worker-Groups .csv views.
+  - object: '/m/:gid/system/lookups/:id/content'
+    actions: ['GET']
+  - object: '/m/:gid/packs'
+    actions: ['GET']
+  # Library / Knowledge objects (event breakers, regexes, grok, parsers, schemas,
+  # parquet & protobuf, data-scan rules & rulesets, AppScope configs, variables, DB
+  # connections) live at `/m/:gid/lib/<type>`. Without this the app can enumerate core
+  # objects but every Knowledge type comes back 403 and silently renders empty.
+  - object: '/m/:gid/lib/:type'
+    actions: ['GET']
+
+  # Operational health (per-object status). A 403 hides the health UI but leaves
+  # config posture + inventory working.
+  - object: '/m/:gid/system/status/inputs'
+    actions: ['GET']
+  - object: '/m/:gid/system/status/outputs'
+    actions: ['GET']
+
+  # Pack-scoped knowledge objects within a Worker Group.
+  - object: '/m/:gid/p/:pack/pipelines'
+    actions: ['GET']
+  - object: '/m/:gid/p/:pack/routes'
+    actions: ['GET']
+  - object: '/m/:gid/p/:pack/system/inputs'
+    actions: ['GET']
+  - object: '/m/:gid/p/:pack/system/outputs'
+    actions: ['GET']
+  # Library / Knowledge objects inside a pack.
+  - object: '/m/:gid/p/:pack/lib/:type'
+    actions: ['GET']
+
+  # Phase 3 — git-backed age/owner (Leader context). Requires versioning access;
+  # a 403 here degrades gracefully to Phases 1-2 with the age/owner UI hidden.
+  - object: '/version'
+    actions: ['GET']
+  - object: '/version/show'
+    actions: ['GET']
+  # Lightweight per-commit file list (tree of touched paths, no diffs). Lets the
+  # age walk and History decide relevance without pulling multi-MB commit diffs.
+  - object: '/version/files'
+    actions: ['GET']

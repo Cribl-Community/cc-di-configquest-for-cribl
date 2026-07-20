@@ -1,0 +1,22 @@
+{
+  "pipelines": {
+    "count": 1,
+    "items": [
+      { "id": "pack_detect", "conf": { "description": "Threat detection", "functions": [ { "id": "eval", "conf": { "add": [ { "name": "sev", "value": "'high'" } ] } } ] } }
+    ]
+  },
+  "routes": {
+    "count": 1,
+    "items": [
+      { "id": "default", "routes": [ { "id": "pr1", "name": "detect route", "filter": "true", "pipeline": "pack_detect", "output": "pack_out", "final": true } ] }
+    ]
+  },
+  "inputs": {
+    "count": 1,
+    "items": [ { "id": "pack_in", "type": "http", "sendToRoutes": true } ]
+  },
+  "outputs": {
+    "count": 1,
+    "items": [ { "id": "pack_out", "type": "s3", "bucket": "cribl-security-archive", "region": "us-west-2" } ]
+  }
+}
