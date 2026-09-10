@@ -1,8 +1,9 @@
 {
-  "name": "configquest",
+  "name": "cc-di-configquest-for-cribl",
   "displayName": "Config Quest for Cribl",
   "description": "Configuration and knowledge object visibility, search, and hygiene for Cribl",
-  "private": true,
+  "author": "Darren Fuller - darren.fuller@gmail.com",
+  "private": false,
   "license": "Apache-2.0",
   "version": "1.0.0",
   "type": "module",
@@ -28,6 +29,9 @@
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
     "vitest": "^4.1.10"
+  },
+  "tags": {
+    "product": ["stream", "search"]
   },
   "cribl": {
     "type": "app",
