@@ -5,7 +5,7 @@
   "author": "Darren Fuller - darren.fuller@gmail.com",
   "private": false,
   "license": "Apache-2.0",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -31,7 +31,10 @@
     "vitest": "^4.1.10"
   },
   "tags": {
-    "product": ["stream", "search"]
+    "product": [
+      "stream",
+      "search"
+    ]
   },
   "cribl": {
     "type": "app",
